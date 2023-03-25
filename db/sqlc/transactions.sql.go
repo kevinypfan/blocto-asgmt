@@ -11,113 +11,73 @@ import (
 
 const createTransaction = `-- name: CreateTransaction :one
 INSERT INTO transactions (
-  "transaction_hash",
+  "tx_hash",
   "block_hash",
-  "block_number",
+  "block_num",
   "from",
-  "gas",
-  "gas_price",
-  "input",
-  "nonce",
   "to",
-  "transaction_index",
-  "value",
-  "type",
-  "v",
-  "r",
-  "s"
+  "nonce",
+  "value"
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
-) RETURNING transaction_hash, block_hash, block_number, "from", gas, gas_price, input, nonce, "to", transaction_index, value, type, v, r, s
+  $1, $2, $3, $4, $5, $6, $7
+) RETURNING tx_hash, block_hash, block_num, "from", "to", nonce, value
 `
 
 type CreateTransactionParams struct {
-	TransactionHash  string `json:"transaction_hash"`
-	BlockHash        string `json:"block_hash"`
-	BlockNumber      string `json:"block_number"`
-	From             string `json:"from"`
-	Gas              string `json:"gas"`
-	GasPrice         string `json:"gas_price"`
-	Input            string `json:"input"`
-	Nonce            string `json:"nonce"`
-	To               string `json:"to"`
-	TransactionIndex string `json:"transaction_index"`
-	Value            string `json:"value"`
-	Type             string `json:"type"`
-	V                string `json:"v"`
-	R                string `json:"r"`
-	S                string `json:"s"`
+	TxHash    string `json:"tx_hash"`
+	BlockHash string `json:"block_hash"`
+	BlockNum  int64  `json:"block_num"`
+	From      string `json:"from"`
+	To        string `json:"to"`
+	Nonce     int64  `json:"nonce"`
+	Value     int64  `json:"value"`
 }
 
 func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error) {
 	row := q.db.QueryRowContext(ctx, createTransaction,
-		arg.TransactionHash,
+		arg.TxHash,
 		arg.BlockHash,
-		arg.BlockNumber,
+		arg.BlockNum,
 		arg.From,
-		arg.Gas,
-		arg.GasPrice,
-		arg.Input,
-		arg.Nonce,
 		arg.To,
-		arg.TransactionIndex,
+		arg.Nonce,
 		arg.Value,
-		arg.Type,
-		arg.V,
-		arg.R,
-		arg.S,
 	)
 	var i Transaction
 	err := row.Scan(
-		&i.TransactionHash,
+		&i.TxHash,
 		&i.BlockHash,
-		&i.BlockNumber,
+		&i.BlockNum,
 		&i.From,
-		&i.Gas,
-		&i.GasPrice,
-		&i.Input,
-		&i.Nonce,
 		&i.To,
-		&i.TransactionIndex,
+		&i.Nonce,
 		&i.Value,
-		&i.Type,
-		&i.V,
-		&i.R,
-		&i.S,
 	)
 	return i, err
 }
 
 const getTransactionByHash = `-- name: GetTransactionByHash :one
-SELECT transaction_hash, block_hash, block_number, "from", gas, gas_price, input, nonce, "to", transaction_index, value, type, v, r, s FROM transactions
-WHERE transaction_hash = $1 LIMIT 1
+SELECT tx_hash, block_hash, block_num, "from", "to", nonce, value FROM transactions
+WHERE tx_hash = $1 LIMIT 1
 `
 
-func (q *Queries) GetTransactionByHash(ctx context.Context, transactionHash string) (Transaction, error) {
-	row := q.db.QueryRowContext(ctx, getTransactionByHash, transactionHash)
+func (q *Queries) GetTransactionByHash(ctx context.Context, txHash string) (Transaction, error) {
+	row := q.db.QueryRowContext(ctx, getTransactionByHash, txHash)
 	var i Transaction
 	err := row.Scan(
-		&i.TransactionHash,
+		&i.TxHash,
 		&i.BlockHash,
-		&i.BlockNumber,
+		&i.BlockNum,
 		&i.From,
-		&i.Gas,
-		&i.GasPrice,
-		&i.Input,
-		&i.Nonce,
 		&i.To,
-		&i.TransactionIndex,
+		&i.Nonce,
 		&i.Value,
-		&i.Type,
-		&i.V,
-		&i.R,
-		&i.S,
 	)
 	return i, err
 }
 
 const listTransactionsByBlockHash = `-- name: ListTransactionsByBlockHash :many
-SELECT transaction_hash, block_hash, block_number, "from", gas, gas_price, input, nonce, "to", transaction_index, value, type, v, r, s FROM transactions
+SELECT tx_hash, block_hash, block_num, "from", "to", nonce, value FROM transactions
 WHERE block_hash = $1
 `
 
@@ -131,21 +91,13 @@ func (q *Queries) ListTransactionsByBlockHash(ctx context.Context, blockHash str
 	for rows.Next() {
 		var i Transaction
 		if err := rows.Scan(
-			&i.TransactionHash,
+			&i.TxHash,
 			&i.BlockHash,
-			&i.BlockNumber,
+			&i.BlockNum,
 			&i.From,
-			&i.Gas,
-			&i.GasPrice,
-			&i.Input,
-			&i.Nonce,
 			&i.To,
-			&i.TransactionIndex,
+			&i.Nonce,
 			&i.Value,
-			&i.Type,
-			&i.V,
-			&i.R,
-			&i.S,
 		); err != nil {
 			return nil, err
 		}
@@ -161,12 +113,12 @@ func (q *Queries) ListTransactionsByBlockHash(ctx context.Context, blockHash str
 }
 
 const listTransactionsByBlockNumber = `-- name: ListTransactionsByBlockNumber :many
-SELECT transaction_hash, block_hash, block_number, "from", gas, gas_price, input, nonce, "to", transaction_index, value, type, v, r, s FROM transactions
-WHERE block_number = $1
+SELECT tx_hash, block_hash, block_num, "from", "to", nonce, value FROM transactions
+WHERE block_num = $1
 `
 
-func (q *Queries) ListTransactionsByBlockNumber(ctx context.Context, blockNumber string) ([]Transaction, error) {
-	rows, err := q.db.QueryContext(ctx, listTransactionsByBlockNumber, blockNumber)
+func (q *Queries) ListTransactionsByBlockNumber(ctx context.Context, blockNum int64) ([]Transaction, error) {
+	rows, err := q.db.QueryContext(ctx, listTransactionsByBlockNumber, blockNum)
 	if err != nil {
 		return nil, err
 	}
@@ -175,21 +127,13 @@ func (q *Queries) ListTransactionsByBlockNumber(ctx context.Context, blockNumber
 	for rows.Next() {
 		var i Transaction
 		if err := rows.Scan(
-			&i.TransactionHash,
+			&i.TxHash,
 			&i.BlockHash,
-			&i.BlockNumber,
+			&i.BlockNum,
 			&i.From,
-			&i.Gas,
-			&i.GasPrice,
-			&i.Input,
-			&i.Nonce,
 			&i.To,
-			&i.TransactionIndex,
+			&i.Nonce,
 			&i.Value,
-			&i.Type,
-			&i.V,
-			&i.R,
-			&i.S,
 		); err != nil {
 			return nil, err
 		}

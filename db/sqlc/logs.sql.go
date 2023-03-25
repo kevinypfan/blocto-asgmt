@@ -7,6 +7,8 @@ package db
 
 import (
 	"context"
+
+	"github.com/lib/pq"
 )
 
 const createLog = `-- name: CreateLog :one
@@ -14,64 +16,56 @@ INSERT INTO logs (
     "address",
     "topics",
     "data",
-    "block_number",
-    "transaction_hash",
-    "transaction_index",
+    "block_num",
+    "tx_hash",
     "block_hash",
-    "log_index",
     "removed"
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9
-) RETURNING id, address, topics, data, block_number, transaction_hash, transaction_index, block_hash, log_index, removed
+  $1, $2, $3, $4, $5, $6, $7
+) RETURNING id, address, topics, data, block_num, tx_hash, block_hash, removed
 `
 
 type CreateLogParams struct {
-	Address          string `json:"address"`
-	Topics           string `json:"topics"`
-	Data             string `json:"data"`
-	BlockNumber      string `json:"block_number"`
-	TransactionHash  string `json:"transaction_hash"`
-	TransactionIndex string `json:"transaction_index"`
-	BlockHash        string `json:"block_hash"`
-	LogIndex         string `json:"log_index"`
-	Removed          bool   `json:"removed"`
+	Address   string   `json:"address"`
+	Topics    []string `json:"topics"`
+	Data      string   `json:"data"`
+	BlockNum  int64    `json:"block_num"`
+	TxHash    string   `json:"tx_hash"`
+	BlockHash string   `json:"block_hash"`
+	Removed   bool     `json:"removed"`
 }
 
 func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, error) {
 	row := q.db.QueryRowContext(ctx, createLog,
 		arg.Address,
-		arg.Topics,
+		pq.Array(arg.Topics),
 		arg.Data,
-		arg.BlockNumber,
-		arg.TransactionHash,
-		arg.TransactionIndex,
+		arg.BlockNum,
+		arg.TxHash,
 		arg.BlockHash,
-		arg.LogIndex,
 		arg.Removed,
 	)
 	var i Log
 	err := row.Scan(
 		&i.ID,
 		&i.Address,
-		&i.Topics,
+		pq.Array(&i.Topics),
 		&i.Data,
-		&i.BlockNumber,
-		&i.TransactionHash,
-		&i.TransactionIndex,
+		&i.BlockNum,
+		&i.TxHash,
 		&i.BlockHash,
-		&i.LogIndex,
 		&i.Removed,
 	)
 	return i, err
 }
 
 const listLogsByTransactionHash = `-- name: ListLogsByTransactionHash :many
-SELECT id, address, topics, data, block_number, transaction_hash, transaction_index, block_hash, log_index, removed FROM logs
-WHERE transaction_hash = $1
+SELECT id, address, topics, data, block_num, tx_hash, block_hash, removed FROM logs
+WHERE tx_hash = $1
 `
 
-func (q *Queries) ListLogsByTransactionHash(ctx context.Context, transactionHash string) ([]Log, error) {
-	rows, err := q.db.QueryContext(ctx, listLogsByTransactionHash, transactionHash)
+func (q *Queries) ListLogsByTransactionHash(ctx context.Context, txHash string) ([]Log, error) {
+	rows, err := q.db.QueryContext(ctx, listLogsByTransactionHash, txHash)
 	if err != nil {
 		return nil, err
 	}
@@ -82,52 +76,11 @@ func (q *Queries) ListLogsByTransactionHash(ctx context.Context, transactionHash
 		if err := rows.Scan(
 			&i.ID,
 			&i.Address,
-			&i.Topics,
+			pq.Array(&i.Topics),
 			&i.Data,
-			&i.BlockNumber,
-			&i.TransactionHash,
-			&i.TransactionIndex,
+			&i.BlockNum,
+			&i.TxHash,
 			&i.BlockHash,
-			&i.LogIndex,
-			&i.Removed,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listLogsByTransactionIndex = `-- name: ListLogsByTransactionIndex :many
-SELECT id, address, topics, data, block_number, transaction_hash, transaction_index, block_hash, log_index, removed FROM logs
-WHERE transaction_index = $1
-`
-
-func (q *Queries) ListLogsByTransactionIndex(ctx context.Context, transactionIndex string) ([]Log, error) {
-	rows, err := q.db.QueryContext(ctx, listLogsByTransactionIndex, transactionIndex)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Log{}
-	for rows.Next() {
-		var i Log
-		if err := rows.Scan(
-			&i.ID,
-			&i.Address,
-			&i.Topics,
-			&i.Data,
-			&i.BlockNumber,
-			&i.TransactionHash,
-			&i.TransactionIndex,
-			&i.BlockHash,
-			&i.LogIndex,
 			&i.Removed,
 		); err != nil {
 			return nil, err

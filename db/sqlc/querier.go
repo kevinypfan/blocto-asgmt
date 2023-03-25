@@ -13,14 +13,12 @@ type Querier interface {
 	CreateLog(ctx context.Context, arg CreateLogParams) (Log, error)
 	CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error)
 	GetBlockByHash(ctx context.Context, blockHash string) (Block, error)
-	GetBlockById(ctx context.Context, blockID int64) (Block, error)
-	GetBlockByNumber(ctx context.Context, blockNumber string) (Block, error)
-	GetTransactionByHash(ctx context.Context, transactionHash string) (Transaction, error)
+	GetBlockByNumber(ctx context.Context, blockNum int64) (Block, error)
+	GetTransactionByHash(ctx context.Context, txHash string) (Transaction, error)
 	ListBlocks(ctx context.Context, arg ListBlocksParams) ([]Block, error)
-	ListLogsByTransactionHash(ctx context.Context, transactionHash string) ([]Log, error)
-	ListLogsByTransactionIndex(ctx context.Context, transactionIndex string) ([]Log, error)
+	ListLogsByTransactionHash(ctx context.Context, txHash string) ([]Log, error)
 	ListTransactionsByBlockHash(ctx context.Context, blockHash string) ([]Transaction, error)
-	ListTransactionsByBlockNumber(ctx context.Context, blockNumber string) ([]Transaction, error)
+	ListTransactionsByBlockNumber(ctx context.Context, blockNum int64) ([]Transaction, error)
 }
 
 var _ Querier = (*Queries)(nil)

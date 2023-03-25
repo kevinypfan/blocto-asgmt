@@ -7,54 +7,29 @@ package db
 import ()
 
 type Block struct {
-	BlockID          int64  `json:"block_id"`
-	BlockHash        string `json:"block_hash"`
-	BlockNumber      string `json:"block_number"`
-	Difficulty       string `json:"difficulty"`
-	ExtraData        string `json:"extra_data"`
-	GasLimit         string `json:"gas_limit"`
-	GasUsed          string `json:"gas_used"`
-	LogsBloom        string `json:"logs_bloom"`
-	Miner            string `json:"miner"`
-	MixHash          string `json:"mix_hash"`
-	Nonce            string `json:"nonce"`
-	ParentHash       string `json:"parent_hash"`
-	ReceiptsRoot     string `json:"receipts_root"`
-	Sha3Uncles       string `json:"sha3_uncles"`
-	Size             string `json:"size"`
-	StateRoot        string `json:"state_root"`
-	Timestamp        string `json:"timestamp"`
-	TotalDifficulty  string `json:"total_difficulty"`
-	TransactionsRoot string `json:"transactions_root"`
+	BlockNum   int64  `json:"block_num"`
+	BlockHash  string `json:"block_hash"`
+	BlockTime  int64  `json:"block_time"`
+	ParentHash string `json:"parent_hash"`
 }
 
 type Log struct {
-	ID               int64  `json:"id"`
-	Address          string `json:"address"`
-	Topics           string `json:"topics"`
-	Data             string `json:"data"`
-	BlockNumber      string `json:"block_number"`
-	TransactionHash  string `json:"transaction_hash"`
-	TransactionIndex string `json:"transaction_index"`
-	BlockHash        string `json:"block_hash"`
-	LogIndex         string `json:"log_index"`
-	Removed          bool   `json:"removed"`
+	ID        int64    `json:"id"`
+	Address   string   `json:"address"`
+	Topics    []string `json:"topics"`
+	Data      string   `json:"data"`
+	BlockNum  int64    `json:"block_num"`
+	TxHash    string   `json:"tx_hash"`
+	BlockHash string   `json:"block_hash"`
+	Removed   bool     `json:"removed"`
 }
 
 type Transaction struct {
-	TransactionHash  string `json:"transaction_hash"`
-	BlockHash        string `json:"block_hash"`
-	BlockNumber      string `json:"block_number"`
-	From             string `json:"from"`
-	Gas              string `json:"gas"`
-	GasPrice         string `json:"gas_price"`
-	Input            string `json:"input"`
-	Nonce            string `json:"nonce"`
-	To               string `json:"to"`
-	TransactionIndex string `json:"transaction_index"`
-	Value            string `json:"value"`
-	Type             string `json:"type"`
-	V                string `json:"v"`
-	R                string `json:"r"`
-	S                string `json:"s"`
+	TxHash    string `json:"tx_hash"`
+	BlockHash string `json:"block_hash"`
+	BlockNum  int64  `json:"block_num"`
+	From      string `json:"from"`
+	To        string `json:"to"`
+	Nonce     int64  `json:"nonce"`
+	Value     int64  `json:"value"`
 }

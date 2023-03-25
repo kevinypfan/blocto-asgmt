@@ -11,101 +11,41 @@ import (
 
 const createBlock = `-- name: CreateBlock :one
 INSERT INTO blocks (
-  "block_id",
-  "block_number",
+  "block_num",
   "block_hash",
-  "difficulty",
-  "extra_data",
-  "gas_limit",
-  "gas_used",
-  "logs_bloom",
-  "miner",
-  "mix_hash",
-  "nonce",
-  "parent_hash",
-  "receipts_root",
-  "sha3_uncles",
-  "size",
-  "state_root",
-  "timestamp",
-  "total_difficulty",
-  "transactions_root"
+  "block_time",
+  "parent_hash"
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
-) RETURNING block_id, block_hash, block_number, difficulty, extra_data, gas_limit, gas_used, logs_bloom, miner, mix_hash, nonce, parent_hash, receipts_root, sha3_uncles, size, state_root, timestamp, total_difficulty, transactions_root
+  $1, $2, $3, $4
+) RETURNING block_num, block_hash, block_time, parent_hash
 `
 
 type CreateBlockParams struct {
-	BlockID          int64  `json:"block_id"`
-	BlockNumber      string `json:"block_number"`
-	BlockHash        string `json:"block_hash"`
-	Difficulty       string `json:"difficulty"`
-	ExtraData        string `json:"extra_data"`
-	GasLimit         string `json:"gas_limit"`
-	GasUsed          string `json:"gas_used"`
-	LogsBloom        string `json:"logs_bloom"`
-	Miner            string `json:"miner"`
-	MixHash          string `json:"mix_hash"`
-	Nonce            string `json:"nonce"`
-	ParentHash       string `json:"parent_hash"`
-	ReceiptsRoot     string `json:"receipts_root"`
-	Sha3Uncles       string `json:"sha3_uncles"`
-	Size             string `json:"size"`
-	StateRoot        string `json:"state_root"`
-	Timestamp        string `json:"timestamp"`
-	TotalDifficulty  string `json:"total_difficulty"`
-	TransactionsRoot string `json:"transactions_root"`
+	BlockNum   int64  `json:"block_num"`
+	BlockHash  string `json:"block_hash"`
+	BlockTime  int64  `json:"block_time"`
+	ParentHash string `json:"parent_hash"`
 }
 
 func (q *Queries) CreateBlock(ctx context.Context, arg CreateBlockParams) (Block, error) {
 	row := q.db.QueryRowContext(ctx, createBlock,
-		arg.BlockID,
-		arg.BlockNumber,
+		arg.BlockNum,
 		arg.BlockHash,
-		arg.Difficulty,
-		arg.ExtraData,
-		arg.GasLimit,
-		arg.GasUsed,
-		arg.LogsBloom,
-		arg.Miner,
-		arg.MixHash,
-		arg.Nonce,
+		arg.BlockTime,
 		arg.ParentHash,
-		arg.ReceiptsRoot,
-		arg.Sha3Uncles,
-		arg.Size,
-		arg.StateRoot,
-		arg.Timestamp,
-		arg.TotalDifficulty,
-		arg.TransactionsRoot,
 	)
 	var i Block
 	err := row.Scan(
-		&i.BlockID,
+		&i.BlockNum,
 		&i.BlockHash,
-		&i.BlockNumber,
-		&i.Difficulty,
-		&i.ExtraData,
-		&i.GasLimit,
-		&i.GasUsed,
-		&i.LogsBloom,
-		&i.Miner,
-		&i.MixHash,
-		&i.Nonce,
+		&i.BlockTime,
 		&i.ParentHash,
-		&i.ReceiptsRoot,
-		&i.Sha3Uncles,
-		&i.Size,
-		&i.StateRoot,
-		&i.Timestamp,
-		&i.TotalDifficulty,
-		&i.TransactionsRoot,
 	)
 	return i, err
 }
 
 const getBlockByHash = `-- name: GetBlockByHash :one
-SELECT block_id, block_hash, block_number, difficulty, extra_data, gas_limit, gas_used, logs_bloom, miner, mix_hash, nonce, parent_hash, receipts_root, sha3_uncles, size, state_root, timestamp, total_difficulty, transactions_root FROM blocks
+SELECT block_num, block_hash, block_time, parent_hash FROM blocks
 WHERE block_hash = $1 LIMIT 1
 `
 
@@ -113,95 +53,33 @@ func (q *Queries) GetBlockByHash(ctx context.Context, blockHash string) (Block, 
 	row := q.db.QueryRowContext(ctx, getBlockByHash, blockHash)
 	var i Block
 	err := row.Scan(
-		&i.BlockID,
+		&i.BlockNum,
 		&i.BlockHash,
-		&i.BlockNumber,
-		&i.Difficulty,
-		&i.ExtraData,
-		&i.GasLimit,
-		&i.GasUsed,
-		&i.LogsBloom,
-		&i.Miner,
-		&i.MixHash,
-		&i.Nonce,
+		&i.BlockTime,
 		&i.ParentHash,
-		&i.ReceiptsRoot,
-		&i.Sha3Uncles,
-		&i.Size,
-		&i.StateRoot,
-		&i.Timestamp,
-		&i.TotalDifficulty,
-		&i.TransactionsRoot,
-	)
-	return i, err
-}
-
-const getBlockById = `-- name: GetBlockById :one
-SELECT block_id, block_hash, block_number, difficulty, extra_data, gas_limit, gas_used, logs_bloom, miner, mix_hash, nonce, parent_hash, receipts_root, sha3_uncles, size, state_root, timestamp, total_difficulty, transactions_root FROM blocks
-WHERE block_id = $1 LIMIT 1
-`
-
-func (q *Queries) GetBlockById(ctx context.Context, blockID int64) (Block, error) {
-	row := q.db.QueryRowContext(ctx, getBlockById, blockID)
-	var i Block
-	err := row.Scan(
-		&i.BlockID,
-		&i.BlockHash,
-		&i.BlockNumber,
-		&i.Difficulty,
-		&i.ExtraData,
-		&i.GasLimit,
-		&i.GasUsed,
-		&i.LogsBloom,
-		&i.Miner,
-		&i.MixHash,
-		&i.Nonce,
-		&i.ParentHash,
-		&i.ReceiptsRoot,
-		&i.Sha3Uncles,
-		&i.Size,
-		&i.StateRoot,
-		&i.Timestamp,
-		&i.TotalDifficulty,
-		&i.TransactionsRoot,
 	)
 	return i, err
 }
 
 const getBlockByNumber = `-- name: GetBlockByNumber :one
-SELECT block_id, block_hash, block_number, difficulty, extra_data, gas_limit, gas_used, logs_bloom, miner, mix_hash, nonce, parent_hash, receipts_root, sha3_uncles, size, state_root, timestamp, total_difficulty, transactions_root FROM blocks
-WHERE block_number = $1 LIMIT 1
+SELECT block_num, block_hash, block_time, parent_hash FROM blocks
+WHERE block_num = $1 LIMIT 1
 `
 
-func (q *Queries) GetBlockByNumber(ctx context.Context, blockNumber string) (Block, error) {
-	row := q.db.QueryRowContext(ctx, getBlockByNumber, blockNumber)
+func (q *Queries) GetBlockByNumber(ctx context.Context, blockNum int64) (Block, error) {
+	row := q.db.QueryRowContext(ctx, getBlockByNumber, blockNum)
 	var i Block
 	err := row.Scan(
-		&i.BlockID,
+		&i.BlockNum,
 		&i.BlockHash,
-		&i.BlockNumber,
-		&i.Difficulty,
-		&i.ExtraData,
-		&i.GasLimit,
-		&i.GasUsed,
-		&i.LogsBloom,
-		&i.Miner,
-		&i.MixHash,
-		&i.Nonce,
+		&i.BlockTime,
 		&i.ParentHash,
-		&i.ReceiptsRoot,
-		&i.Sha3Uncles,
-		&i.Size,
-		&i.StateRoot,
-		&i.Timestamp,
-		&i.TotalDifficulty,
-		&i.TransactionsRoot,
 	)
 	return i, err
 }
 
 const listBlocks = `-- name: ListBlocks :many
-SELECT block_id, block_hash, block_number, difficulty, extra_data, gas_limit, gas_used, logs_bloom, miner, mix_hash, nonce, parent_hash, receipts_root, sha3_uncles, size, state_root, timestamp, total_difficulty, transactions_root FROM blocks
+SELECT block_num, block_hash, block_time, parent_hash FROM blocks
 ORDER BY block_id desc
 LIMIT $1
 OFFSET $2
@@ -222,25 +100,10 @@ func (q *Queries) ListBlocks(ctx context.Context, arg ListBlocksParams) ([]Block
 	for rows.Next() {
 		var i Block
 		if err := rows.Scan(
-			&i.BlockID,
+			&i.BlockNum,
 			&i.BlockHash,
-			&i.BlockNumber,
-			&i.Difficulty,
-			&i.ExtraData,
-			&i.GasLimit,
-			&i.GasUsed,
-			&i.LogsBloom,
-			&i.Miner,
-			&i.MixHash,
-			&i.Nonce,
+			&i.BlockTime,
 			&i.ParentHash,
-			&i.ReceiptsRoot,
-			&i.Sha3Uncles,
-			&i.Size,
-			&i.StateRoot,
-			&i.Timestamp,
-			&i.TotalDifficulty,
-			&i.TransactionsRoot,
 		); err != nil {
 			return nil, err
 		}

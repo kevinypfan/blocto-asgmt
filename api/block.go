@@ -45,7 +45,7 @@ func (server *Server) getBlockById(ctx *gin.Context) {
 		return
 	}
 
-	block, err := server.store.GetBlockById(ctx, req.ID)
+	block, err := server.store.GetBlockByNumber(ctx, req.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
