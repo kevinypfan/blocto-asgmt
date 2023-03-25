@@ -2,7 +2,7 @@ package util
 
 import (
 	"encoding/json"
-	"fmt"
+	// "fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -39,6 +39,35 @@ type Transaction struct {
 	S                string `json:"s"`
 }
 
+type Receipt struct {
+	BlockHash         string `json:"blockHash"`
+	BlockNumber       string `json:"blockNumber"`
+	ContractAddress   string `json:"contractAddress"`
+	CumulativeGasUsed string `json:"cumulativeGasUsed"`
+	EffectiveGasPrice string `json:"effectiveGasPrice"`
+	From              string `json:"from"`
+	GasUsed           string `json:"gasUsed"`
+	LogsBloom         string `json:"logsBloom"`
+	Status            string `json:"status"`
+	To                string `json:"to"`
+	TransactionHash   string `json:"transactionHash"`
+	TransactionIndex  string `json:"transactionIndex"`
+	ReceiptType       string `json:"type"`
+	Logs              []Log  `json:"logs"`
+}
+
+type Log struct {
+	Address          string   `json:"address"`
+	Topics           []string `json:"topics"`
+	Data             string   `json:"data"`
+	BlockNumber      string   `json:"blockNumber"`
+	TransactionHash  string   `json:"transactionHash"`
+	TransactionIndex string   `json:"transactionIndex"`
+	BlockHash        string   `json:"blockHash"`
+	LogIndex         string   `json:"logIndex"`
+	Removed          bool     `json:"removed"`
+}
+
 type Block struct {
 	Difficulty       string   `json:"difficulty"`
 	ExtraData        string   `json:"extraData"`
@@ -72,27 +101,27 @@ func postJsonRpc(payload string) []byte {
 	req, err := http.NewRequest(method, url, data)
 
 	if err != nil {
-		fmt.Println(err)
+		// fmt.Println(err)
 		return nil
 	}
 	req.Header.Add("Content-Type", "application/json")
 
 	res, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
+		// fmt.Println(err)
 		return nil
 	}
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Println(err)
+		// fmt.Println(err)
 		return nil
 	}
 	return body
 }
 
-func GetBlockByNumber(tag string) {
+func FetchBlockByNumber(tag string) Block {
 	sendData := RPCSendData{}
 	sendData.Jsonrpc = "2.0"
 	sendData.Id = 1
@@ -104,15 +133,68 @@ func GetBlockByNumber(tag string) {
 		panic(err)
 	}
 
-	fmt.Println(string(payload))
+	// fmt.Println(string(payload))
 
 	resBody := postJsonRpc(string(payload))
 
-	fmt.Println(string(resBody))
+	// fmt.Println(string(resBody))
 
 	var RpcBlock RPCResponse[Block]
 
 	json.Unmarshal(resBody, &RpcBlock)
 
-	fmt.Println(RpcBlock.Result.Hash)
+	// fmt.Println(RpcBlock.Result.Hash)
+	return RpcBlock.Result
+}
+
+func FetchTransactionByHash(hash string) Transaction {
+	sendData := RPCSendData{}
+	sendData.Jsonrpc = "2.0"
+	sendData.Id = 1
+	sendData.Params = []any{hash}
+	sendData.Method = "eth_getTransactionByHash"
+
+	payload, err := json.Marshal(sendData)
+	if err != nil {
+		panic(err)
+	}
+
+	// fmt.Println(string(payload))
+
+	resBody := postJsonRpc(string(payload))
+
+	// fmt.Println(string(resBody))
+
+	var RpcBlock RPCResponse[Transaction]
+
+	json.Unmarshal(resBody, &RpcBlock)
+
+	// fmt.Println(RpcBlock.Result.Hash)
+	return RpcBlock.Result
+}
+
+func FetchTransactionReceipt(hash string) Receipt {
+	sendData := RPCSendData{}
+	sendData.Jsonrpc = "2.0"
+	sendData.Id = 1
+	sendData.Params = []any{hash}
+	sendData.Method = "eth_getTransactionReceipt"
+
+	payload, err := json.Marshal(sendData)
+	if err != nil {
+		panic(err)
+	}
+
+	// fmt.Println(string(payload))
+
+	resBody := postJsonRpc(string(payload))
+
+	// fmt.Println(string(resBody))
+
+	var RpcBlock RPCResponse[Receipt]
+
+	json.Unmarshal(resBody, &RpcBlock)
+
+	// fmt.Println(RpcBlock.Result)
+	return RpcBlock.Result
 }
