@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	db "github.com/kevinypfan/blocto-asgmt/db/sqlc"
 	"github.com/kevinypfan/blocto-asgmt/util"
+	"github.com/segmentio/kafka-go"
 )
 
 // Consumer struct
@@ -20,10 +21,11 @@ type Consumer struct {
 	jobsChan      chan int
 	store         *db.SQLStore
 	config        util.Config
+	writer        *kafka.Writer
 }
 
 func (c *Consumer) startTraceBlocks(num int64) {
-	block := getLatestBlock()
+	block := GetLatestBlock()
 	fmt.Println(block.Number().Int64())
 
 	latestBlock, err := c.store.GetLatestBlock(ctx)
@@ -72,7 +74,7 @@ func (c *Consumer) startTraceBlocks(num int64) {
 
 func (c *Consumer) saveBlockProcess(blockNum *big.Int) {
 	fmt.Printf("Save Block = %v\n", blockNum)
-	block := getBlockByNumber(blockNum)
+	block := GetBlockByNumber(blockNum)
 	arg := db.CreateBlockParams{
 		BlockHash:  block.Hash().Hex(),
 		BlockTime:  block.ReceivedAt.Unix(),
@@ -94,7 +96,15 @@ func (c *Consumer) saveBlockProcess(blockNum *big.Int) {
 	go func(transactions []*types.Transaction) {
 		for _, tx := range transactions {
 			fmt.Printf("txChain Tx = %v\n", tx.Hash().Hex())
-			c.txChain <- tx
+			// c.txChain <- tx
+			msg := kafka.Message{
+				Value: []byte(tx.Hash().Hex()),
+			}
+
+			err := c.writer.WriteMessages(context.Background(), msg)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 	}(transactions)
 }
@@ -108,7 +118,7 @@ func (c *Consumer) saveTxProcess(tx *types.Transaction) {
 
 	// fmt.Println(tx.Hash().Hex())
 
-	receipt := getTransactionReceipt(tx.Hash())
+	receipt := GetTransactionReceipt(tx.Hash())
 
 	arg := db.CreateTransactionParams{
 		TxHash:    receipt.TxHash.Hex(),
@@ -182,20 +192,20 @@ func (c *Consumer) worker(ctx context.Context, num int, wg *sync.WaitGroup) {
 
 			fmt.Printf("worker %v: ", num)
 
-		case tx := <-c.txChain:
-			if ctx.Err() != nil {
-				log.Println("get next job tx", tx.Hash(), "and close the worker", num)
-				return
-			}
-			fmt.Printf("worker %v: ", num)
-			c.saveTxProcess(tx)
-		case rlog := <-c.logChain:
-			if ctx.Err() != nil {
-				log.Println("get next job rlog", rlog.Address.Hash(), "and close the worker", num)
-				return
-			}
-			fmt.Printf("worker %v: ", num)
-			c.saveLogProcess(rlog)
+		// case tx := <-c.txChain:
+		// 	if ctx.Err() != nil {
+		// 		log.Println("get next job tx", tx.Hash(), "and close the worker", num)
+		// 		return
+		// 	}
+		// 	fmt.Printf("worker %v: ", num)
+		// 	c.saveTxProcess(tx)
+		// case rlog := <-c.logChain:
+		// 	if ctx.Err() != nil {
+		// 		log.Println("get next job rlog", rlog.Address.Hash(), "and close the worker", num)
+		// 		return
+		// 	}
+		// 	fmt.Printf("worker %v: ", num)
+		// 	c.saveLogProcess(rlog)
 
 		case <-ctx.Done():
 			log.Println("close the worker", num)
@@ -209,7 +219,7 @@ func (c *Consumer) worker(ctx context.Context, num int, wg *sync.WaitGroup) {
 	}
 }
 
-func RunCrawl(config util.Config, store *db.SQLStore) {
+func RunCrawl(config util.Config, store *db.SQLStore, writer *kafka.Writer) {
 
 	finished := make(chan bool)
 	wg := &sync.WaitGroup{}
@@ -222,6 +232,7 @@ func RunCrawl(config util.Config, store *db.SQLStore) {
 		logChain:      make(chan *types.Log),
 		store:         store,
 		config:        config,
+		writer:        writer,
 	}
 
 	ctx := context.Background()

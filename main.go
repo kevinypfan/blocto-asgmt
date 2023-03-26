@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -9,6 +10,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/kevinypfan/blocto-asgmt/api"
 	db "github.com/kevinypfan/blocto-asgmt/db/sqlc"
+	"github.com/kevinypfan/blocto-asgmt/kafka"
 	"github.com/kevinypfan/blocto-asgmt/util"
 	"github.com/kevinypfan/blocto-asgmt/web3"
 	_ "github.com/lib/pq"
@@ -41,10 +43,16 @@ func main() {
 
 	runDBMigration(config.MigrationURL, config.DBSource)
 
+	fmt.Println(config.KafkaBrokers)
+
+	kafka.CreateTopic(config.KafkaBrokers, config.KafkaTxTopic)
+
 	store := db.NewStore(conn)
+	writer := kafka.NewKafkaWriter(config.KafkaBrokers, config.KafkaTxTopic)
+
 	server := api.NewServer(config, store)
 
-	go web3.RunCrawl(config, store)
+	go web3.RunCrawl(config, store, writer)
 
 	err = server.Start(config.HTTPServerAddress)
 	if err != nil {

@@ -10,6 +10,9 @@ type Config struct {
 	CrawlBlockChunk   int64  `mapstructure:"CRAWL_BLOCK_CHUNK"`
 	CrawlStartNum     int    `mapstructure:"CRAWL_START_NUM"`
 	MigrationURL      string `mapstructure:"MIGRATION_URL"`
+	KafkaBrokers      string `mapstructure:"KAFKA_BROKERS"`
+	KafkaTxTopic      string `mapstructure:"KAFKA_TX_TOPIC"`
+	KafkaGroup        string `mapstructure:"KAFKA_GROUP"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

@@ -17,7 +17,7 @@ var (
 	client, err = ethclient.DialContext(ctx, url)
 )
 
-func getBlockByNumber(number *big.Int) *types.Block {
+func GetBlockByNumber(number *big.Int) *types.Block {
 	block, err := client.BlockByNumber(ctx, number)
 	if err != nil {
 		log.Println(err)
@@ -26,7 +26,7 @@ func getBlockByNumber(number *big.Int) *types.Block {
 	return block
 }
 
-func getLatestBlock() *types.Block {
+func GetLatestBlock() *types.Block {
 	block, err := client.BlockByNumber(ctx, nil)
 	if err != nil {
 		log.Println(err)
@@ -35,7 +35,7 @@ func getLatestBlock() *types.Block {
 	return block
 }
 
-func getHeaderByNumber(number *big.Int) *types.Header {
+func GetHeaderByNumber(number *big.Int) *types.Header {
 	header, err := client.HeaderByNumber(ctx, nil)
 	if err != nil {
 		log.Println(err)
@@ -44,7 +44,7 @@ func getHeaderByNumber(number *big.Int) *types.Header {
 	return header
 }
 
-func getTransactionByHash(hash common.Hash) *types.Transaction {
+func GetTransactionByHash(hash common.Hash) *types.Transaction {
 	tx, isPending, err := client.TransactionByHash(ctx, hash)
 	if err != nil {
 		log.Println(err)
@@ -57,7 +57,7 @@ func getTransactionByHash(hash common.Hash) *types.Transaction {
 	return tx
 }
 
-func getTransactionReceipt(txHash common.Hash) *types.Receipt {
+func GetTransactionReceipt(txHash common.Hash) *types.Receipt {
 	receipt, err := client.TransactionReceipt(ctx, txHash)
 	if err != nil {
 		log.Println(err)
