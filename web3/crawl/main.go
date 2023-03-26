@@ -1,7 +1,8 @@
-package web3
+package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"math/big"
@@ -10,8 +11,17 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	db "github.com/kevinypfan/blocto-asgmt/db/sqlc"
 	"github.com/kevinypfan/blocto-asgmt/util"
+	web3 "github.com/kevinypfan/blocto-asgmt/web3"
 	"github.com/segmentio/kafka-go"
 )
+
+func NewKafkaWriter(kafkaURL, topic string) *kafka.Writer {
+	return &kafka.Writer{
+		Addr:     kafka.TCP(kafkaURL),
+		Topic:    topic,
+		Balancer: &kafka.LeastBytes{},
+	}
+}
 
 // Consumer struct
 type Consumer struct {
@@ -22,13 +32,14 @@ type Consumer struct {
 	store         *db.SQLStore
 	config        util.Config
 	writer        *kafka.Writer
+	ctx           context.Context
 }
 
 func (c *Consumer) startTraceBlocks(num int64) {
-	block := GetLatestBlock()
+	block := web3.GetLatestBlock()
 	fmt.Println(block.Number().Int64())
 
-	latestBlock, err := c.store.GetLatestBlock(ctx)
+	latestBlock, err := c.store.GetLatestBlock(c.ctx)
 	fmt.Println(latestBlock.BlockNum)
 
 	if err != nil {
@@ -47,7 +58,7 @@ func (c *Consumer) startTraceBlocks(num int64) {
 			}
 		}
 
-		firstBlock, err := c.store.GetFirstBlock(ctx)
+		firstBlock, err := c.store.GetFirstBlock(c.ctx)
 		fmt.Println(firstBlock.BlockNum)
 
 		if err != nil {
@@ -74,7 +85,7 @@ func (c *Consumer) startTraceBlocks(num int64) {
 
 func (c *Consumer) saveBlockProcess(blockNum *big.Int) {
 	fmt.Printf("Save Block = %v\n", blockNum)
-	block := GetBlockByNumber(blockNum)
+	block := web3.GetBlockByNumber(blockNum)
 	arg := db.CreateBlockParams{
 		BlockHash:  block.Hash().Hex(),
 		BlockTime:  int64(block.Time()),
@@ -85,7 +96,7 @@ func (c *Consumer) saveBlockProcess(blockNum *big.Int) {
 		arg.BlockNum = block.Number().Int64()
 	}
 
-	_, err := c.store.CreateBlock(ctx, arg)
+	_, err := c.store.CreateBlock(c.ctx, arg)
 
 	if err != nil {
 		log.Println(err, "CreateBlock")
@@ -118,7 +129,7 @@ func (c *Consumer) saveTxProcess(tx *types.Transaction) {
 
 	// fmt.Println(tx.Hash().Hex())
 
-	receipt := GetTransactionReceipt(tx.Hash())
+	receipt := web3.GetTransactionReceipt(tx.Hash())
 
 	arg := db.CreateTransactionParams{
 		TxHash:    receipt.TxHash.Hex(),
@@ -138,7 +149,7 @@ func (c *Consumer) saveTxProcess(tx *types.Transaction) {
 		arg.Value = tx.Value().Int64()
 	}
 
-	_, err = c.store.CreateTransaction(ctx, arg)
+	_, err = c.store.CreateTransaction(c.ctx, arg)
 	if err != nil {
 		log.Println(err, "CreateTransaction")
 	}
@@ -171,7 +182,7 @@ func (c *Consumer) saveLogProcess(rlog *types.Log) {
 		LogIndex:  int64(rlog.Index),
 	}
 
-	_, err = c.store.CreateLog(ctx, arg)
+	_, err := c.store.CreateLog(c.ctx, arg)
 	if err != nil {
 		log.Println(err, "CreateLog")
 	}
@@ -224,6 +235,7 @@ func RunCrawl(config util.Config, store *db.SQLStore, writer *kafka.Writer) {
 	finished := make(chan bool)
 	wg := &sync.WaitGroup{}
 	wg.Add(config.CrawlWorkerSize)
+	ctx := context.Background()
 
 	consumer := Consumer{
 		jobsChan:      make(chan int, config.CrawlWorkerSize),
@@ -233,9 +245,8 @@ func RunCrawl(config util.Config, store *db.SQLStore, writer *kafka.Writer) {
 		store:         store,
 		config:        config,
 		writer:        writer,
+		ctx:           ctx,
 	}
-
-	ctx := context.Background()
 
 	for i := 0; i < config.CrawlWorkerSize; i++ {
 		go consumer.worker(ctx, i, wg)
@@ -245,4 +256,21 @@ func RunCrawl(config util.Config, store *db.SQLStore, writer *kafka.Writer) {
 
 	<-finished
 	log.Println("Done")
+}
+
+func main() {
+	config, err := util.LoadConfig(".")
+	if err != nil {
+		log.Fatal("cannot load config:", err)
+	}
+
+	conn, err := sql.Open(config.DBDriver, config.DBSource)
+	if err != nil {
+		log.Fatal("cannot connect to db:", err)
+	}
+
+	store := db.NewStore(conn)
+	writer := NewKafkaWriter(config.KafkaBrokers, config.KafkaTxTopic)
+
+	RunCrawl(config, store, writer)
 }

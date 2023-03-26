@@ -12,7 +12,6 @@ import (
 	db "github.com/kevinypfan/blocto-asgmt/db/sqlc"
 	"github.com/kevinypfan/blocto-asgmt/kafka"
 	"github.com/kevinypfan/blocto-asgmt/util"
-	"github.com/kevinypfan/blocto-asgmt/web3"
 	_ "github.com/lib/pq"
 )
 
@@ -48,11 +47,10 @@ func main() {
 	kafka.CreateTopic(config.KafkaBrokers, config.KafkaTxTopic)
 
 	store := db.NewStore(conn)
-	writer := kafka.NewKafkaWriter(config.KafkaBrokers, config.KafkaTxTopic)
 
 	server := api.NewServer(config, store)
 
-	go web3.RunCrawl(config, store, writer)
+	// go web3.RunCrawl(config, store, writer)
 
 	err = server.Start(config.HTTPServerAddress)
 	if err != nil {

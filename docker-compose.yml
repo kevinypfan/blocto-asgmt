@@ -42,6 +42,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-api
+    restart: always
     ports:
       - "8080:8080"
     environment:
@@ -62,6 +63,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-service
+    restart: always
     environment:
       - DB_SOURCE=postgresql://root:secret@postgres:5432/blocto-asgmt?sslmode=disable
       - KAFKA_BROKERS=broker:9092
@@ -78,3 +80,26 @@ services:
         "/app/start.sh"
       ]
     command: [ "/app/transaction" ]
+  crawl:
+    build:
+      context: .
+      dockerfile: Dockerfile-crawl
+    environment:
+      - DB_SOURCE=postgresql://root:secret@postgres:5432/blocto-asgmt?sslmode=disable
+      - KAFKA_BROKERS=broker:9092
+    depends_on:
+      api:
+        condition: service_started
+      service:
+        condition: service_started
+      broker:
+        condition: service_healthy
+    restart: always
+    entrypoint:
+      [
+        "/app/wait-for.sh",
+        "postgres:5432",
+        "--",
+        "/app/start.sh"
+      ]
+    command: [ "/app/crawl" ]
