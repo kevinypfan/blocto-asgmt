@@ -9,11 +9,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/types"
 	db "github.com/kevinypfan/blocto-asgmt/db/sqlc"
+	"github.com/kevinypfan/blocto-asgmt/util"
 )
-
-const poolSize = 10
-const chunk = 30
-const startNum = 28377631
 
 // Consumer struct
 type Consumer struct {
@@ -22,6 +19,7 @@ type Consumer struct {
 	logChain      chan *types.Log
 	jobsChan      chan int
 	store         *db.SQLStore
+	config        util.Config
 }
 
 func (c *Consumer) startTraceBlocks(num int64) {
@@ -56,8 +54,8 @@ func (c *Consumer) startTraceBlocks(num int64) {
 
 		var minNum int64
 
-		if firstBlock.BlockNum-chunk > 0 {
-			minNum = firstBlock.BlockNum - chunk
+		if firstBlock.BlockNum-c.config.CrawlBlockChunk > 0 {
+			minNum = firstBlock.BlockNum - c.config.CrawlBlockChunk
 		} else {
 			minNum = 0
 		}
@@ -205,29 +203,30 @@ func (c *Consumer) worker(ctx context.Context, num int, wg *sync.WaitGroup) {
 		default:
 			if num == 0 {
 				log.Println("defautl", num)
-				c.startTraceBlocks(startNum)
+				c.startTraceBlocks(int64(c.config.CrawlStartNum))
 			}
 		}
 	}
 }
 
-func RunCrawl(store *db.SQLStore) {
+func RunCrawl(config util.Config, store *db.SQLStore) {
 
 	finished := make(chan bool)
 	wg := &sync.WaitGroup{}
-	wg.Add(poolSize)
+	wg.Add(config.CrawlWorkerSize)
 
 	consumer := Consumer{
-		jobsChan:      make(chan int, poolSize),
+		jobsChan:      make(chan int, config.CrawlWorkerSize),
 		blockNumChain: make(chan *big.Int),
 		txChain:       make(chan *types.Transaction),
 		logChain:      make(chan *types.Log),
 		store:         store,
+		config:        config,
 	}
 
 	ctx := context.Background()
 
-	for i := 0; i < poolSize; i++ {
+	for i := 0; i < config.CrawlWorkerSize; i++ {
 		go consumer.worker(ctx, i, wg)
 	}
 

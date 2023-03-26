@@ -3,15 +3,17 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	db "github.com/kevinypfan/blocto-asgmt/db/sqlc"
+	"github.com/kevinypfan/blocto-asgmt/util"
 )
 
 type Server struct {
 	router *gin.Engine
 	store  *db.SQLStore
+	config util.Config
 }
 
-func NewServer(store *db.SQLStore) *Server {
-	server := &Server{store: store}
+func NewServer(config util.Config, store *db.SQLStore) *Server {
+	server := &Server{store: store, config: config}
 	router := gin.Default()
 
 	router.GET("/ping", server.ping)
