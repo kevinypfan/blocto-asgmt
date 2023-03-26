@@ -2,13 +2,12 @@
 INSERT INTO logs (
     "address",
     "topics",
-    "data",
     "block_num",
     "tx_hash",
     "block_hash",
     "removed"
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7
+  $1, $2, $3, $4, $5, $6
 ) RETURNING *;
 
 -- name: ListLogsByTransactionHash :many

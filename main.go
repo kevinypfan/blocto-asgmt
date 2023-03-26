@@ -2,9 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
-	"time"
 
 	"github.com/kevinypfan/blocto-asgmt/api"
 	db "github.com/kevinypfan/blocto-asgmt/db/sqlc"
@@ -38,13 +36,7 @@ func main() {
 	store := db.NewStore(conn)
 	server := api.NewServer(store)
 
-	go func() {
-		for {
-			time.Sleep(1 * time.Second)
-			web3.RunCrawl(store)
-			fmt.Println("go func")
-		}
-	}()
+	go web3.RunCrawl(store)
 
 	err = server.Start(serverAddress)
 	if err != nil {

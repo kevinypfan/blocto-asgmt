@@ -15,20 +15,18 @@ const createLog = `-- name: CreateLog :one
 INSERT INTO logs (
     "address",
     "topics",
-    "data",
     "block_num",
     "tx_hash",
     "block_hash",
     "removed"
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7
-) RETURNING id, address, topics, data, block_num, tx_hash, block_hash, removed
+  $1, $2, $3, $4, $5, $6
+) RETURNING id, address, topics, block_num, tx_hash, block_hash, removed
 `
 
 type CreateLogParams struct {
 	Address   string   `json:"address"`
 	Topics    []string `json:"topics"`
-	Data      string   `json:"data"`
 	BlockNum  int64    `json:"block_num"`
 	TxHash    string   `json:"tx_hash"`
 	BlockHash string   `json:"block_hash"`
@@ -39,7 +37,6 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, erro
 	row := q.db.QueryRowContext(ctx, createLog,
 		arg.Address,
 		pq.Array(arg.Topics),
-		arg.Data,
 		arg.BlockNum,
 		arg.TxHash,
 		arg.BlockHash,
@@ -50,7 +47,6 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, erro
 		&i.ID,
 		&i.Address,
 		pq.Array(&i.Topics),
-		&i.Data,
 		&i.BlockNum,
 		&i.TxHash,
 		&i.BlockHash,
@@ -60,7 +56,7 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, erro
 }
 
 const listLogsByTransactionHash = `-- name: ListLogsByTransactionHash :many
-SELECT id, address, topics, data, block_num, tx_hash, block_hash, removed FROM logs
+SELECT id, address, topics, block_num, tx_hash, block_hash, removed FROM logs
 WHERE tx_hash = $1
 `
 
@@ -77,7 +73,6 @@ func (q *Queries) ListLogsByTransactionHash(ctx context.Context, txHash string) 
 			&i.ID,
 			&i.Address,
 			pq.Array(&i.Topics),
-			&i.Data,
 			&i.BlockNum,
 			&i.TxHash,
 			&i.BlockHash,

@@ -17,7 +17,6 @@ type Log struct {
 	ID        int64    `json:"id"`
 	Address   string   `json:"address"`
 	Topics    []string `json:"topics"`
-	Data      string   `json:"data"`
 	BlockNum  int64    `json:"block_num"`
 	TxHash    string   `json:"tx_hash"`
 	BlockHash string   `json:"block_hash"`

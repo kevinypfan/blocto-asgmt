@@ -14,6 +14,7 @@ type Querier interface {
 	CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error)
 	GetBlockByHash(ctx context.Context, blockHash string) (Block, error)
 	GetBlockByNumber(ctx context.Context, blockNum int64) (Block, error)
+	GetLatestBlock(ctx context.Context) (Block, error)
 	GetTransactionByHash(ctx context.Context, txHash string) (Transaction, error)
 	ListBlocks(ctx context.Context, arg ListBlocksParams) ([]Block, error)
 	ListLogsByTransactionHash(ctx context.Context, txHash string) ([]Log, error)

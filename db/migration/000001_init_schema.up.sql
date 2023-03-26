@@ -19,7 +19,6 @@ CREATE TABLE "logs" (
     "id" bigserial PRIMARY KEY,
     "address" varchar NOT NULL,
     "topics" varchar[] NOT NULL,
-    "data" varchar NOT NULL,
     "block_num" bigint NOT NULL,
     "tx_hash" varchar NOT NULL,
     "block_hash" varchar NOT NULL,
