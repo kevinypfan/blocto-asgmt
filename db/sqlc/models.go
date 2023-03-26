@@ -21,7 +21,6 @@ type Log struct {
 	TxHash    string   `json:"tx_hash"`
 	BlockHash string   `json:"block_hash"`
 	LogIndex  int64    `json:"log_index"`
-	Data      string   `json:"data"`
 	Removed   bool     `json:"removed"`
 }
 

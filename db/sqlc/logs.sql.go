@@ -19,11 +19,10 @@ INSERT INTO logs (
     "tx_hash",
     "block_hash",
     "removed",
-    "log_index",
-    "data"
+    "log_index"
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8
-) RETURNING id, address, topics, block_num, tx_hash, block_hash, log_index, data, removed
+  $1, $2, $3, $4, $5, $6, $7
+) RETURNING id, address, topics, block_num, tx_hash, block_hash, log_index, removed
 `
 
 type CreateLogParams struct {
@@ -34,7 +33,6 @@ type CreateLogParams struct {
 	BlockHash string   `json:"block_hash"`
 	Removed   bool     `json:"removed"`
 	LogIndex  int64    `json:"log_index"`
-	Data      string   `json:"data"`
 }
 
 func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, error) {
@@ -46,7 +44,6 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, erro
 		arg.BlockHash,
 		arg.Removed,
 		arg.LogIndex,
-		arg.Data,
 	)
 	var i Log
 	err := row.Scan(
@@ -57,14 +54,13 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, erro
 		&i.TxHash,
 		&i.BlockHash,
 		&i.LogIndex,
-		&i.Data,
 		&i.Removed,
 	)
 	return i, err
 }
 
 const listLogsByTransactionHash = `-- name: ListLogsByTransactionHash :many
-SELECT id, address, topics, block_num, tx_hash, block_hash, log_index, data, removed FROM logs
+SELECT id, address, topics, block_num, tx_hash, block_hash, log_index, removed FROM logs
 WHERE tx_hash = $1 ORDER BY log_index asc
 `
 
@@ -85,7 +81,6 @@ func (q *Queries) ListLogsByTransactionHash(ctx context.Context, txHash string) 
 			&i.TxHash,
 			&i.BlockHash,
 			&i.LogIndex,
-			&i.Data,
 			&i.Removed,
 		); err != nil {
 			return nil, err
