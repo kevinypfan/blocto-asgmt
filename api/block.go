@@ -12,9 +12,6 @@ type listBlocksRequest struct {
 	Limit int32 `form:"limit" binding:"required,min=1"`
 }
 
-type listBlocksResponse struct {
-}
-
 func (server *Server) getListBlocks(ctx *gin.Context) {
 	var req listBlocksRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
@@ -41,6 +38,14 @@ type blockByIdRequest struct {
 	ID int64 `uri:"id" binding:"required,min=1"`
 }
 
+type blockByIdResponse struct {
+	BlockNum     int64            `json:"block_num"`
+	BlockHash    string           `json:"block_hash"`
+	BlockTime    int64            `json:"block_time"`
+	ParentHash   string           `json:"parent_hash"`
+	Transactions []db.Transaction `json:"transactions"`
+}
+
 func (server *Server) getBlockById(ctx *gin.Context) {
 	var req blockByIdRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
@@ -59,5 +64,15 @@ func (server *Server) getBlockById(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, block)
+	transactions, err := server.store.ListTransactionsByBlockNumber(ctx, req.ID)
+
+	blockByIdResponse := blockByIdResponse{
+		BlockNum:     block.BlockNum,
+		BlockHash:    block.BlockHash,
+		BlockTime:    block.BlockTime,
+		ParentHash:   block.ParentHash,
+		Transactions: transactions,
+	}
+
+	ctx.JSON(http.StatusOK, blockByIdResponse)
 }
