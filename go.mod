@@ -9,6 +9,12 @@ require (
 )
 
 require (
+	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	go.uber.org/atomic v1.9.0 // indirect
+)
+
+require (
 	github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0 // indirect
 	github.com/bytedance/sonic v1.8.6 // indirect
@@ -23,6 +29,7 @@ require (
 	github.com/go-playground/validator/v10 v10.12.0 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
+	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/holiman/uint256 v1.2.0 // indirect

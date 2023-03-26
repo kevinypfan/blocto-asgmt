@@ -9,6 +9,7 @@ type Config struct {
 	CrawlWorkerSize   int    `mapstructure:"CRAWL_WORKER_SIZE"`
 	CrawlBlockChunk   int64  `mapstructure:"CRAWL_BLOCK_CHUNK"`
 	CrawlStartNum     int    `mapstructure:"CRAWL_START_NUM"`
+	MigrationURL      string `mapstructure:"MIGRATION_URL"`
 }
 
 func LoadConfig(path string) (config Config, err error) {
