@@ -77,7 +77,7 @@ func (c *Consumer) saveBlockProcess(blockNum *big.Int) {
 	block := GetBlockByNumber(blockNum)
 	arg := db.CreateBlockParams{
 		BlockHash:  block.Hash().Hex(),
-		BlockTime:  block.ReceivedAt.Unix(),
+		BlockTime:  int64(block.Time()),
 		ParentHash: block.ParentHash().Hex(),
 	}
 
