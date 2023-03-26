@@ -16,6 +16,10 @@ WHERE block_num = $1 LIMIT 1;
 SELECT * FROM blocks
 WHERE block_hash = $1 LIMIT 1;
 
+-- name: GetFirstBlock :one
+SELECT * FROM blocks
+ORDER BY block_num asc LIMIT 1;
+
 -- name: GetLatestBlock :one
 SELECT * FROM blocks
 ORDER BY block_num desc LIMIT 1;
@@ -25,3 +29,4 @@ SELECT * FROM blocks
 ORDER BY block_num desc
 LIMIT $1
 OFFSET $2;
+

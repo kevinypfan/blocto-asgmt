@@ -12,6 +12,9 @@ type listBlocksRequest struct {
 	Limit int32 `form:"limit" binding:"required,min=1"`
 }
 
+type listBlocksResponse struct {
+}
+
 func (server *Server) getListBlocks(ctx *gin.Context) {
 	var req listBlocksRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {

@@ -17,10 +17,12 @@ INSERT INTO transactions (
   "from",
   "to",
   "nonce",
-  "value"
+  "value",
+  "gas",
+  "tx_index"
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7
-) RETURNING tx_hash, block_hash, block_num, "from", "to", nonce, value
+  $1, $2, $3, $4, $5, $6, $7, $8, $9
+) RETURNING tx_hash, block_hash, block_num, "from", "to", nonce, value, gas, tx_index
 `
 
 type CreateTransactionParams struct {
@@ -31,6 +33,8 @@ type CreateTransactionParams struct {
 	To        string `json:"to"`
 	Nonce     int64  `json:"nonce"`
 	Value     int64  `json:"value"`
+	Gas       int64  `json:"gas"`
+	TxIndex   int64  `json:"tx_index"`
 }
 
 func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error) {
@@ -42,6 +46,8 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		arg.To,
 		arg.Nonce,
 		arg.Value,
+		arg.Gas,
+		arg.TxIndex,
 	)
 	var i Transaction
 	err := row.Scan(
@@ -52,12 +58,14 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		&i.To,
 		&i.Nonce,
 		&i.Value,
+		&i.Gas,
+		&i.TxIndex,
 	)
 	return i, err
 }
 
 const getTransactionByHash = `-- name: GetTransactionByHash :one
-SELECT tx_hash, block_hash, block_num, "from", "to", nonce, value FROM transactions
+SELECT tx_hash, block_hash, block_num, "from", "to", nonce, value, gas, tx_index FROM transactions
 WHERE tx_hash = $1 LIMIT 1
 `
 
@@ -72,12 +80,14 @@ func (q *Queries) GetTransactionByHash(ctx context.Context, txHash string) (Tran
 		&i.To,
 		&i.Nonce,
 		&i.Value,
+		&i.Gas,
+		&i.TxIndex,
 	)
 	return i, err
 }
 
 const listTransactionsByBlockHash = `-- name: ListTransactionsByBlockHash :many
-SELECT tx_hash, block_hash, block_num, "from", "to", nonce, value FROM transactions
+SELECT tx_hash, block_hash, block_num, "from", "to", nonce, value, gas, tx_index FROM transactions
 WHERE block_hash = $1
 `
 
@@ -98,6 +108,8 @@ func (q *Queries) ListTransactionsByBlockHash(ctx context.Context, blockHash str
 			&i.To,
 			&i.Nonce,
 			&i.Value,
+			&i.Gas,
+			&i.TxIndex,
 		); err != nil {
 			return nil, err
 		}
@@ -113,8 +125,8 @@ func (q *Queries) ListTransactionsByBlockHash(ctx context.Context, blockHash str
 }
 
 const listTransactionsByBlockNumber = `-- name: ListTransactionsByBlockNumber :many
-SELECT tx_hash, block_hash, block_num, "from", "to", nonce, value FROM transactions
-WHERE block_num = $1
+SELECT tx_hash, block_hash, block_num, "from", "to", nonce, value, gas, tx_index FROM transactions
+WHERE block_num = $1 ORDER BY tx_index asc
 `
 
 func (q *Queries) ListTransactionsByBlockNumber(ctx context.Context, blockNum int64) ([]Transaction, error) {
@@ -134,6 +146,8 @@ func (q *Queries) ListTransactionsByBlockNumber(ctx context.Context, blockNum in
 			&i.To,
 			&i.Nonce,
 			&i.Value,
+			&i.Gas,
+			&i.TxIndex,
 		); err != nil {
 			return nil, err
 		}

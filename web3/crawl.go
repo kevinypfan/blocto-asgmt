@@ -6,13 +6,14 @@ import (
 	"log"
 	"math/big"
 	"sync"
-	"time"
 
 	"github.com/ethereum/go-ethereum/core/types"
 	db "github.com/kevinypfan/blocto-asgmt/db/sqlc"
 )
 
 const poolSize = 10
+const chunk = 30
+const startNum = 28377631
 
 // Consumer struct
 type Consumer struct {
@@ -23,7 +24,7 @@ type Consumer struct {
 	store         *db.SQLStore
 }
 
-func (c *Consumer) startTraceBlocks() {
+func (c *Consumer) startTraceBlocks(num int64) {
 	block := getLatestBlock()
 	fmt.Println(block.Number().Int64())
 
@@ -34,11 +35,39 @@ func (c *Consumer) startTraceBlocks() {
 		log.Println(err, "GetLatestBlock")
 	}
 
+	startBlockNum := num - 1
+	if latestBlock.BlockNum > startBlockNum {
+		startBlockNum = latestBlock.BlockNum
+	}
+
 	go func(latestBlock int64, dbBlock int64) {
-		if latestBlock > dbBlock {
-			for i := dbBlock + 1; i <= latestBlock; i++ {
+		if latestBlock > startBlockNum {
+			for i := startBlockNum + 1; i <= latestBlock; i++ {
 				c.blockNumChain <- big.NewInt(i)
 			}
+		}
+
+		firstBlock, err := c.store.GetFirstBlock(ctx)
+		fmt.Println(firstBlock.BlockNum)
+
+		if err != nil {
+			log.Println(err, "GetFirstBlock")
+		}
+
+		var minNum int64
+
+		if firstBlock.BlockNum-chunk > 0 {
+			minNum = firstBlock.BlockNum - chunk
+		} else {
+			minNum = 0
+		}
+
+		if firstBlock.BlockNum == 0 {
+			return
+		}
+
+		for i := firstBlock.BlockNum - 1; i >= minNum; i-- {
+			c.blockNumChain <- big.NewInt(i)
 		}
 	}(block.Number().Int64(), latestBlock.BlockNum)
 }
@@ -89,6 +118,8 @@ func (c *Consumer) saveTxProcess(tx *types.Transaction) {
 		BlockNum:  receipt.BlockNumber.Int64(),
 		From:      from.Hex(),
 		Nonce:     int64(tx.Nonce()),
+		Gas:       int64(receipt.GasUsed),
+		TxIndex:   receipt.TxHash.Big().Int64(),
 	}
 
 	if tx.To() != nil {
@@ -129,6 +160,7 @@ func (c *Consumer) saveLogProcess(rlog *types.Log) {
 		TxHash:    rlog.TxHash.Hex(),
 		BlockHash: rlog.BlockHash.Hex(),
 		Removed:   rlog.Removed,
+		LogIndex:  int64(rlog.Index),
 	}
 
 	_, err = c.store.CreateLog(ctx, arg)
@@ -172,8 +204,8 @@ func (c *Consumer) worker(ctx context.Context, num int, wg *sync.WaitGroup) {
 			return
 		default:
 			if num == 0 {
-				time.Sleep(10 * time.Second)
-				c.startTraceBlocks()
+				log.Println("defautl", num)
+				c.startTraceBlocks(startNum)
 			}
 		}
 	}
@@ -199,7 +231,7 @@ func RunCrawl(store *db.SQLStore) {
 		go consumer.worker(ctx, i, wg)
 	}
 
-	consumer.startTraceBlocks()
+	// consumer.startTraceBlocks()
 
 	<-finished
 	log.Println("Done")

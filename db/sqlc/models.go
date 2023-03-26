@@ -20,6 +20,8 @@ type Log struct {
 	BlockNum  int64    `json:"block_num"`
 	TxHash    string   `json:"tx_hash"`
 	BlockHash string   `json:"block_hash"`
+	LogIndex  int64    `json:"log_index"`
+	Data      string   `json:"data"`
 	Removed   bool     `json:"removed"`
 }
 
@@ -31,4 +33,6 @@ type Transaction struct {
 	To        string `json:"to"`
 	Nonce     int64  `json:"nonce"`
 	Value     int64  `json:"value"`
+	Gas       int64  `json:"gas"`
+	TxIndex   int64  `json:"tx_index"`
 }

@@ -12,7 +12,9 @@ CREATE TABLE "transactions" (
     "from" varchar NOT NULL,
     "to" varchar NOT NULL,
     "nonce" bigint NOT NULL,
-    "value" bigint NOT NULL
+    "value" bigint NOT NULL,
+    "gas" bigint NOT NULL,
+    "tx_index" bigint NOT NULL
 );
 
 CREATE TABLE "logs" (
@@ -22,6 +24,7 @@ CREATE TABLE "logs" (
     "block_num" bigint NOT NULL,
     "tx_hash" varchar NOT NULL,
     "block_hash" varchar NOT NULL,
+    "log_index" bigint NOT NULL,
     "removed" boolean NOT NULL
 );
 

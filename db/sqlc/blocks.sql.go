@@ -78,6 +78,23 @@ func (q *Queries) GetBlockByNumber(ctx context.Context, blockNum int64) (Block, 
 	return i, err
 }
 
+const getFirstBlock = `-- name: GetFirstBlock :one
+SELECT block_num, block_hash, block_time, parent_hash FROM blocks
+ORDER BY block_num asc LIMIT 1
+`
+
+func (q *Queries) GetFirstBlock(ctx context.Context) (Block, error) {
+	row := q.db.QueryRowContext(ctx, getFirstBlock)
+	var i Block
+	err := row.Scan(
+		&i.BlockNum,
+		&i.BlockHash,
+		&i.BlockTime,
+		&i.ParentHash,
+	)
+	return i, err
+}
+
 const getLatestBlock = `-- name: GetLatestBlock :one
 SELECT block_num, block_hash, block_time, parent_hash FROM blocks
 ORDER BY block_num desc LIMIT 1
